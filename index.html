@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Жи-ши, ча-ща</title>
     <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="app.css" />
 </head>
 <body>
     <div ng-controller="WordsController as words">
@@ -18,13 +19,16 @@
 
         <section class="panel">
             Добавить новый материал на обработку:
-            <div>
+            <div ng-show="false">
                 <input type="url" ng-model="words.url" tooltip="URL текста" placeholder="URL текста" />
                 <button ng-click="words.processUrl()" class="btn">Посчитать</button>
             </div>
-            <div ng-show="$scope.lastSubmit">
-                {{$scope.lastSubmit.chars}} знаков
-                {{$scope.lastSubmit.words}} слов
+            <div class="drop" drop-files on-drop="processFiles(files)">
+                Перенесите сюда прочитанный файл
+            </div>
+            <div ng-show="lastSubmit">
+                {{lastSubmit.chars}} знаков
+                {{lastSubmit.words}} слов
             </div>
         </section>
 
@@ -53,6 +57,7 @@
         </section>
 
     </div>
+
     <script src="//vk.com/js/api/xd_connection.js?2" type="text/javascript"></script>
     <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular.min.js"></script>
     <script type="text/javascript" src="app.js"></script>

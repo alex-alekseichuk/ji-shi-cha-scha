@@ -50,7 +50,7 @@ app.service('VkService', [
 
 app.controller('WordsController', [
   '$scope', '$http', 'VkService', function($scope, $http, vk) {
-    var countChars, countWords, ctrl, initData, initToday, periods, processText, save, shift, stripHtml, today, update;
+    var countChars, countWords, ctrl, initData, initToday, loadTextFile, periods, processText, save, shift, stripHtml, today, update;
     ctrl = this;
     ctrl.lastSubmit = void 0;
     periods = [
@@ -78,8 +78,7 @@ app.controller('WordsController', [
     };
     ctrl.processUrl = function() {
       var url;
-      url = 'http://www.corsproxy.com/' + ctrl.url.replace(/https?:\/\//, "");
-      console.log(url);
+      url = ctrl.url;
       return $http.get(url).success(function(data) {
         ctrl.url = '';
         return processText(stripHtml(data));
@@ -106,6 +105,7 @@ app.controller('WordsController', [
         p.data[0] += words;
         p.words += words;
       }
+      $scope.$apply();
       return save();
     };
     save = function() {
@@ -212,6 +212,27 @@ app.controller('WordsController', [
     today = function() {
       return parseInt((new Date().getTime() - new Date(1970, 0, 5).getTime()) / 86400000);
     };
+    $scope.processFiles = function(files) {
+      var file, _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = files.length; _i < _len; _i++) {
+        file = files[_i];
+        if (file.type.match('text/plain')) {
+          _results.push(loadTextFile(file));
+        } else {
+          _results.push(void 0);
+        }
+      }
+      return _results;
+    };
+    loadTextFile = function(file) {
+      var reader;
+      reader = new FileReader();
+      reader.onload = function(e) {
+        return processText(e.target.result);
+      };
+      return reader.readAsText(file);
+    };
     initData();
     vk.getValue('data', function(data) {
       data = JSON.parse(data);
@@ -226,5 +247,46 @@ app.controller('WordsController', [
     return this;
   }
 ]);
+
+app.directive('dropFiles', function() {
+  return {
+    restrict: 'A',
+    scope: {
+      onDrop: '&'
+    },
+    link: function(scope, element, attr) {
+      var el;
+      el = element[0];
+      el.addEventListener('dragover', function(e) {
+        if (e.preventDefault) {
+          e.preventDefault();
+        }
+        this.classList.add('over');
+        return false;
+      }, false);
+      el.addEventListener('dragenter', function(e) {
+        this.classList.add('over');
+        return false;
+      }, false);
+      el.addEventListener('dragleave', function(e) {
+        this.classList.remove('over');
+        return false;
+      }, false);
+      return el.addEventListener('drop', function(e) {
+        if (e.preventDefault) {
+          e.preventDefault();
+        }
+        if (e.stopPropagation) {
+          e.stopPropagation();
+        }
+        this.classList.remove('over');
+        scope.onDrop({
+          files: e.dataTransfer.files
+        });
+        return false;
+      }, false);
+    }
+  };
+});
 
 //# sourceMappingURL=app.map
