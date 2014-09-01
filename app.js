@@ -64,7 +64,7 @@ app.factory('VkApi', [
 
 app.factory('WordsService', [
   '$q', '$http', 'VkApi', function($q, $http, storage) {
-    var countChars, countWords, initData, initToday, loadTextFile, periods, processText, save, self, service, shift, stripHtml, today, update;
+    var countChars, countWords, initData, initToday, loadTextFile, periods, processText, resetData, save, self, service, shift, stripHtml, today, update;
     self = this;
     service = {
       init: function(scope) {
@@ -104,7 +104,7 @@ app.factory('WordsService', [
         return _results;
       },
       reset: function() {
-        initData();
+        resetData();
         initToday();
         return save();
       }
@@ -208,43 +208,46 @@ app.factory('WordsService', [
       };
     };
     initData = function() {
-      return service.data = {
-        chars: 0,
-        words: 0,
-        periods: [
-          {
-            x: 0,
-            data: [0, 0, 0, 0, 0, 0],
-            words: 0
-          }, {
-            x: 0,
-            data: [0, 0, 0],
-            words: 0
-          }, {
-            x: 0,
-            data: [0, 0, 0, 0, 0],
-            words: 0
-          }, {
-            x: 0,
-            data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            words: 0
-          }
-        ]
-      };
+      service.data = {};
+      return resetData();
+    };
+    resetData = function() {
+      service.data.chars = 0;
+      service.data.words = 0;
+      return service.data.periods = [
+        {
+          x: 0,
+          data: [0, 0, 0, 0, 0, 0],
+          words: 0
+        }, {
+          x: 0,
+          data: [0, 0, 0],
+          words: 0
+        }, {
+          x: 0,
+          data: [0, 0, 0, 0, 0],
+          words: 0
+        }, {
+          x: 0,
+          data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          words: 0
+        }
+      ];
     };
     save = function(cb) {
       var p;
       p = storage.setValue(self.scope, 'data', JSON.stringify(service.data));
       if (cb) {
-        return p.then(cb);
+        p.then(cb);
       }
+      return console.log('save');
     };
     countChars = function(s) {
       s = s.replace(/[^a-zA-Z0-9абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ]/gi, "");
       return s.length;
     };
     countWords = function(s) {
-      s = s.replace(/[\s\n\r\.,\?\!;:]/gi, " ");
+      s = s.replace(/[\s\.,\?\!;:]/gi, " ");
       s = s.replace(/[^a-zA-Z0-9абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ\s]/gi, "");
       s = s.replace(/(^\s*)|(\s*$)/gi, "");
       s = s.replace(/[ ]{2,}/gi, " ");

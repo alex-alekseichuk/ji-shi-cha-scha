@@ -67,7 +67,7 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
         if file.type.match('text/plain')
           loadTextFile file
     reset: ->
-      initData()
+      resetData()
       initToday()
       save()
 
@@ -155,26 +155,28 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
       chars: 0
 
   initData = ->
-    service.data =
-      chars: 0,
-      words: 0,
-      periods: [
-        {x:0,data:[0,0,0,0,0,0],words:0},
-        {x:0,data:[0,0,0],words:0},
-        {x:0,data:[0,0,0,0,0,],words:0},
-        {x:0,data:[0,0,0,0,0,0,0,0,0,0,0,0],words:0}
-      ]
-
+    service.data = {}
+    resetData()
+  resetData = ->
+    service.data.chars = 0
+    service.data.words = 0
+    service.data.periods = [
+      {x:0,data:[0,0,0,0,0,0],words:0},
+      {x:0,data:[0,0,0],words:0},
+      {x:0,data:[0,0,0,0,0,],words:0},
+      {x:0,data:[0,0,0,0,0,0,0,0,0,0,0,0],words:0}
+    ]
   save = (cb) ->
     p = storage.setValue(self.scope, 'data', JSON.stringify(service.data))
     p.then cb if cb
+    console.log 'save'
 
   # util methods
   countChars = (s) ->
     s = s.replace(/[^a-zA-Z0-9абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ]/gi,"")
     s.length
   countWords = (s) ->
-    s = s.replace(/[\s\n\r\.,\?\!;:]/gi," ") # spaces between words
+    s = s.replace(/[\s\.,\?\!;:]/gi," ") # spaces between words
     s = s.replace(/[^a-zA-Z0-9абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ\s]/gi,"")
     s = s.replace(/(^\s*)|(\s*$)/gi,"") # exclude start and end white-space
     s = s.replace(/[ ]{2,}/gi," ") # 2 or more space to 1
@@ -195,6 +197,7 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
 app.controller 'WordsController', ['$scope', 'WordsService', ($scope, service) ->
   $scope.reset = ->
     return unless confirm('Уверены?')
+    #$scope.$apply -> service.reset()
     service.reset()
 
 #  $scope.processUrl = ->
