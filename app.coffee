@@ -50,7 +50,7 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
       deferred = $q.defer()
       storage.init(self.scope).then ->
         storage.getValue(self.scope, 'data').then (data) ->
-          data = JSON.parse(data)
+          data = JSON.parse(data) if data
           if (data)
             service.data = data
             if update()
@@ -66,6 +66,8 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
       for file in files
         if file.type.match('text/plain')
           loadTextFile file
+        else if file.type.match('application/pdf')
+          loadPdfFile file
     reset: ->
       resetData()
       initToday()
@@ -85,6 +87,17 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
     reader.onload = (e) ->
       processText e.target.result
     reader.readAsText file
+
+  loadPdfFile = (file) ->
+    reader = new FileReader()
+    reader.onload = (e) ->
+      pdf2txt = new Pdf2TextClass()
+      pdf2txt.pdfToText e.target.result, (text) ->
+        processText text
+    reader.readAsArrayBuffer file
+
+
+
 
   processText = (text) ->
     chars = countChars(text)
@@ -169,7 +182,6 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
   save = (cb) ->
     p = storage.setValue(self.scope, 'data', JSON.stringify(service.data))
     p.then cb if cb
-    console.log 'save'
 
   # util methods
   countChars = (s) ->

@@ -64,7 +64,7 @@ app.factory('VkApi', [
 
 app.factory('WordsService', [
   '$q', '$http', 'VkApi', function($q, $http, storage) {
-    var countChars, countWords, initData, initToday, loadTextFile, periods, processText, resetData, save, self, service, shift, stripHtml, today, update;
+    var countChars, countWords, initData, initToday, loadPdfFile, loadTextFile, periods, processText, resetData, save, self, service, shift, stripHtml, today, update;
     self = this;
     service = {
       init: function(scope) {
@@ -73,7 +73,9 @@ app.factory('WordsService', [
         deferred = $q.defer();
         storage.init(self.scope).then(function() {
           return storage.getValue(self.scope, 'data').then(function(data) {
-            data = JSON.parse(data);
+            if (data) {
+              data = JSON.parse(data);
+            }
             if (data) {
               service.data = data;
               if (update()) {
@@ -97,6 +99,8 @@ app.factory('WordsService', [
           file = files[_i];
           if (file.type.match('text/plain')) {
             _results.push(loadTextFile(file));
+          } else if (file.type.match('application/pdf')) {
+            _results.push(loadPdfFile(file));
           } else {
             _results.push(void 0);
           }
@@ -131,6 +135,18 @@ app.factory('WordsService', [
         return processText(e.target.result);
       };
       return reader.readAsText(file);
+    };
+    loadPdfFile = function(file) {
+      var reader;
+      reader = new FileReader();
+      reader.onload = function(e) {
+        var pdf2txt;
+        pdf2txt = new Pdf2TextClass();
+        return pdf2txt.pdfToText(e.target.result, function(text) {
+          return processText(text);
+        });
+      };
+      return reader.readAsArrayBuffer(file);
     };
     processText = function(text) {
       var chars, i, p, words;
@@ -238,9 +254,8 @@ app.factory('WordsService', [
       var p;
       p = storage.setValue(self.scope, 'data', JSON.stringify(service.data));
       if (cb) {
-        p.then(cb);
+        return p.then(cb);
       }
-      return console.log('save');
     };
     countChars = function(s) {
       s = s.replace(/[^a-zA-Z0-9абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ]/gi, "");
