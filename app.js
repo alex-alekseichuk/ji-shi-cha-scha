@@ -7,52 +7,108 @@ var app;
 
 app = angular.module('wordsApp', []);
 
-app.service('VkService', [
-  '$http', function($http) {
-    var onIncorrectInit, service;
-    service = this;
-    service.connected = false;
-    service.test_mode = 1;
-    onIncorrectInit = function() {
-      return console.log('VK API initialization failed');
-    };
-    try {
-      VK.init(function() {
-        return service.connected = true;
-      }, function() {
-        return onIncorrectInit();
-      }, '5.24');
-    } catch (_error) {
-      onIncorrectInit();
-    }
-    service.getValue = function(key, cb) {
-      return VK.api('storage.get', {
-        key: key,
-        test_mode: service.test_mode
-      }, function(data) {
-        return cb(data.response);
-      });
-    };
-    service.setValue = function(key, value, cb) {
-      return VK.api('storage.set', {
-        key: key,
-        value: value,
-        test_mode: service.test_mode
-      }, function(data) {
-        if (cb) {
-          return cb(data.response === 1);
+app.factory('VkApi', [
+  '$q', function($q) {
+    var service;
+    service = {
+      test_mode: 1,
+      getValue: function(scope, key) {
+        var deferred;
+        deferred = $q.defer();
+        VK.api('storage.get', {
+          key: key,
+          test_mode: service.test_mode
+        }, function(data) {
+          return scope.$apply(function() {
+            return deferred.resolve(data.response);
+          });
+        });
+        return deferred.promise;
+      },
+      setValue: function(scope, key, value) {
+        var deferred;
+        deferred = $q.defer();
+        VK.api('storage.set', {
+          key: key,
+          value: value,
+          test_mode: service.test_mode
+        }, function(data) {
+          return scope.$apply(function() {
+            if (data.response === 1) {
+              return deferred.resolve();
+            } else {
+              return deferred.reject(data.error);
+            }
+          });
+        });
+        return deferred.promise;
+      },
+      init: function(scope) {
+        var deferred;
+        deferred = $q.defer();
+        try {
+          VK.init(function() {
+            return deferred.resolve();
+          }, function() {
+            return deferred.reject("VK API initialization failed");
+          }, '5.24');
+        } catch (_error) {
+          return false;
         }
-      });
+        return deferred.promise;
+      }
     };
     return service;
   }
 ]);
 
-app.controller('WordsController', [
-  '$scope', '$http', 'VkService', function($scope, $http, vk) {
-    var countChars, countWords, ctrl, initData, initToday, loadTextFile, periods, processText, save, shift, stripHtml, today, update;
-    ctrl = this;
-    ctrl.lastSubmit = void 0;
+app.factory('WordsService', [
+  '$q', '$http', 'VkApi', function($q, $http, storage) {
+    var countChars, countWords, initData, initToday, loadTextFile, periods, processText, save, self, service, shift, stripHtml, today, update;
+    self = this;
+    service = {
+      init: function(scope) {
+        var deferred;
+        self.scope = scope;
+        deferred = $q.defer();
+        storage.init(self.scope).then(function() {
+          return storage.getValue(self.scope, 'data').then(function(data) {
+            data = JSON.parse(data);
+            if (data) {
+              service.data = data;
+              if (update()) {
+                save(function() {
+                  return deferred.resolve();
+                });
+                return;
+              }
+            } else {
+              initData();
+            }
+            return deferred.resolve();
+          });
+        });
+        return deferred.promise;
+      },
+      loadFiles: function(files) {
+        var file, _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = files.length; _i < _len; _i++) {
+          file = files[_i];
+          if (file.type.match('text/plain')) {
+            _results.push(loadTextFile(file));
+          } else {
+            _results.push(void 0);
+          }
+        }
+        return _results;
+      },
+      reset: function() {
+        initData();
+        initToday();
+        return save();
+      }
+    };
     periods = [
       {
         n: 6,
@@ -68,54 +124,38 @@ app.controller('WordsController', [
         d: 4 * 7
       }
     ];
-    ctrl.reset = function() {
-      if (!confirm('Уверены?')) {
-        return;
-      }
-      initData();
-      initToday();
-      return save();
-    };
-    ctrl.processUrl = function() {
-      var url;
-      url = ctrl.url;
-      return $http.get(url).success(function(data) {
-        ctrl.url = '';
-        return processText(stripHtml(data));
-      }).error(function(err) {
-        return console.log(err);
-      });
+    loadTextFile = function(file) {
+      var reader;
+      reader = new FileReader();
+      reader.onload = function(e) {
+        return processText(e.target.result);
+      };
+      return reader.readAsText(file);
     };
     processText = function(text) {
       var chars, i, p, words;
-      console.log(text);
       chars = countChars(text);
       words = countWords(text);
-      $scope.lastSubmit = {
+      service.lastSubmit = {
         chars: chars,
         words: words
       };
       update();
-      ctrl.data.today.chars += chars;
-      ctrl.data.today.words += words;
-      ctrl.data.chars += chars;
-      ctrl.data.words += words;
-      for (i in ctrl.data.periods) {
-        p = ctrl.data.periods[i];
+      service.data.today.chars += chars;
+      service.data.today.words += words;
+      service.data.chars += chars;
+      service.data.words += words;
+      for (i in service.data.periods) {
+        p = service.data.periods[i];
         p.data[0] += words;
         p.words += words;
       }
-      $scope.$apply();
       return save();
-    };
-    save = function() {
-      var data;
-      return vk.setValue('data', data = JSON.stringify(ctrl.data));
     };
     shift = function(_n) {
       var d, i, n, np, p, value, _i, _j, _k, _l, _len, _ref, _ref1, _ref2;
-      for (i in ctrl.data.periods) {
-        p = ctrl.data.periods[i];
+      for (i in service.data.periods) {
+        p = service.data.periods[i];
         np = periods[i].n;
         d = periods[i].n;
         n = parseInt((_n + p.x) / d);
@@ -148,9 +188,9 @@ app.controller('WordsController', [
     update = function() {
       var t;
       t = today();
-      if (ctrl.data.today) {
-        if (ctrl.data.today.t !== t) {
-          shift(t - ctrl.data.today.t);
+      if (service.data.today) {
+        if (service.data.today.t !== t) {
+          shift(t - service.data.today.t);
           initToday();
           return true;
         }
@@ -161,14 +201,14 @@ app.controller('WordsController', [
       return false;
     };
     initToday = function() {
-      return ctrl.data.today = {
+      return service.data.today = {
         t: today(),
         words: 0,
         chars: 0
       };
     };
     initData = function() {
-      return ctrl.data = {
+      return service.data = {
         chars: 0,
         words: 0,
         periods: [
@@ -192,14 +232,21 @@ app.controller('WordsController', [
         ]
       };
     };
+    save = function(cb) {
+      var p;
+      p = storage.setValue(self.scope, 'data', JSON.stringify(service.data));
+      if (cb) {
+        return p.then(cb);
+      }
+    };
     countChars = function(s) {
-      s = s.replace(/\s/gi, "");
+      s = s.replace(/[^a-zA-Z0-9абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ]/gi, "");
       return s.length;
     };
     countWords = function(s) {
+      s = s.replace(/[\s\n\r\.,\?\!;:]/gi, " ");
+      s = s.replace(/[^a-zA-Z0-9абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ\s]/gi, "");
       s = s.replace(/(^\s*)|(\s*$)/gi, "");
-      s = s.replace(/\s/, " ");
-      s = s.replace(/\n/, " ");
       s = s.replace(/[ ]{2,}/gi, " ");
       return s.split(' ').length;
     };
@@ -212,39 +259,25 @@ app.controller('WordsController', [
     today = function() {
       return parseInt((new Date().getTime() - new Date(1970, 0, 5).getTime()) / 86400000);
     };
+    return service;
+  }
+]);
+
+app.controller('WordsController', [
+  '$scope', 'WordsService', function($scope, service) {
+    $scope.reset = function() {
+      if (!confirm('Уверены?')) {
+        return;
+      }
+      return service.reset();
+    };
     $scope.processFiles = function(files) {
-      var file, _i, _len, _results;
-      _results = [];
-      for (_i = 0, _len = files.length; _i < _len; _i++) {
-        file = files[_i];
-        if (file.type.match('text/plain')) {
-          _results.push(loadTextFile(file));
-        } else {
-          _results.push(void 0);
-        }
-      }
-      return _results;
+      return service.loadFiles(files);
     };
-    loadTextFile = function(file) {
-      var reader;
-      reader = new FileReader();
-      reader.onload = function(e) {
-        return processText(e.target.result);
-      };
-      return reader.readAsText(file);
-    };
-    initData();
-    vk.getValue('data', function(data) {
-      data = JSON.parse(data);
-      if (data) {
-        ctrl.data = data;
-      }
-      if (update()) {
-        save();
-      }
-      return $scope.$apply();
+    return service.init($scope).then(function() {
+      $scope.data = service.data;
+      return $scope.loaded = true;
     });
-    return this;
   }
 ]);
 
