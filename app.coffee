@@ -17,19 +17,16 @@ app.factory 'VkApi', ['$q', ($q) ->
       deferred = $q.defer()
       VK.api 'storage.set', {key:key, value:value, test_mode:service.test_mode}, (data) ->
         scope.$apply ->
-          if data.response == 1
-            deferred.resolve()
-          else
-            deferred.reject data.error
+          if data.response && data.response == 1
+            console.log data
+          deferred.resolve()
       deferred.promise
-    init: (scope) ->
+    init: ->
       deferred = $q.defer()
       try
         VK.init ->
-          #scope.$apply ->
           deferred.resolve()
         , ->
-          #scope.$apply ->
           deferred.reject "VK API initialization failed"
         , '5.24'
       catch
@@ -48,13 +45,15 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
     init: (scope) ->
       self.scope = scope
       deferred = $q.defer()
-      storage.init(self.scope).then ->
+      _init = storage.init(self.scope)
+      return unless _init
+      _init.then ->
         storage.getValue(self.scope, 'data').then (data) ->
           data = JSON.parse(data) if data
           if (data)
             service.data = data
             if update()
-              save ->
+              save().then ->
                 deferred.resolve()
               return
           else
@@ -93,17 +92,16 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
     reader.onload = (e) ->
       pdf2txt = new Pdf2TextClass()
       pdf2txt.pdfToText e.target.result, (text) ->
+        #console.log text
         processText text
     reader.readAsArrayBuffer file
-
-
 
 
   processText = (text) ->
     chars = countChars(text)
     words = countWords(text)
 
-    service.lastSubmit =
+    self.scope.lastSubmit =
       chars: chars
       words: words
 
@@ -179,19 +177,46 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
       {x:0,data:[0,0,0,0,0,],words:0},
       {x:0,data:[0,0,0,0,0,0,0,0,0,0,0,0],words:0}
     ]
-  save = (cb) ->
-    p = storage.setValue(self.scope, 'data', JSON.stringify(service.data))
-    p.then cb if cb
+
+  save = ->
+    deferred = $q.defer()
+    storage.setValue(self.scope, 'data', JSON.stringify(service.data)).then ->
+      deferred.resolve()
+    deferred.promise
+
+  chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
+  spaces = " \t\r\n.,:;"
 
   # util methods
   countChars = (s) ->
+    n = 0
+    for c in s
+      n += 1 if -1 != chars.indexOf(c)
+    n
+  countWords = (s) ->
+    n = 0
+    w = false
+    for c in s
+      if -1 != chars.indexOf(c)
+        w = true
+      else
+        if -1 != spaces.indexOf(c)
+          n += 1 if w
+          w = false
+    n += 1 if w
+    n
+
+  countChars2 = (s) ->
+    indexOf()
     s = s.replace(/[^a-zA-Z0-9абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ]/gi,"")
     s.length
-  countWords = (s) ->
+  countWords2 = (s) ->
+    s = s.replace(/\n/gi," ")
+    s = s.replace(/\r/gi," ")
     s = s.replace(/[\s\.,\?\!;:]/gi," ") # spaces between words
     s = s.replace(/[^a-zA-Z0-9абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ\s]/gi,"")
     s = s.replace(/(^\s*)|(\s*$)/gi,"") # exclude start and end white-space
-    s = s.replace(/[ ]{2,}/gi," ") # 2 or more space to 1
+    s = s.replace(/\s{2,}/gi," ") # 2 or more space to 1
     s.split(' ').length
 
   stripHtml = (html) ->
@@ -210,6 +235,7 @@ app.controller 'WordsController', ['$scope', 'WordsService', ($scope, service) -
   $scope.reset = ->
     return unless confirm('Уверены?')
     #$scope.$apply -> service.reset()
+    delete $scope.lastSubmit
     service.reset()
 
 #  $scope.processUrl = ->
@@ -224,10 +250,11 @@ app.controller 'WordsController', ['$scope', 'WordsService', ($scope, service) -
     service.loadFiles files
 
   # init
-  service.init($scope).then ->
-    $scope.data = service.data
-    $scope.loaded = true
-
+  _init = service.init($scope)
+  if _init
+    _init.then ->
+      $scope.data = service.data
+      $scope.loaded = true
 ]
 
 

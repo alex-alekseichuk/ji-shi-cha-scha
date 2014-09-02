@@ -10,7 +10,7 @@
 </head>
 <body ng-controller="WordsController as ctrl">
     <div ng-hide="loaded">Loading...</div>
-    <div ng-show="loaded">
+    <div ng-show="loaded" class="ng-hide">
         <section class="panel">
             Вы уже набрали:
             {{data.chars}} знаков
@@ -61,6 +61,7 @@
 
     <script src="//vk.com/js/api/xd_connection.js?2" type="text/javascript"></script>
     <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular.min.js"></script>
+    <script type="text/javascript" src="win1251.js"></script>
     <script type="text/javascript" src="pdf.js"></script>
     <script type="text/javascript" src="pdf.worker.js"></script>
     <script type="text/javascript" src="app.js"></script>

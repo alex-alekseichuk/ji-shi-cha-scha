@@ -34,16 +34,15 @@ app.factory('VkApi', [
           test_mode: service.test_mode
         }, function(data) {
           return scope.$apply(function() {
-            if (data.response === 1) {
-              return deferred.resolve();
-            } else {
-              return deferred.reject(data.error);
+            if (data.response && data.response === 1) {
+              console.log(data);
             }
+            return deferred.resolve();
           });
         });
         return deferred.promise;
       },
-      init: function(scope) {
+      init: function() {
         var deferred;
         deferred = $q.defer();
         try {
@@ -64,14 +63,18 @@ app.factory('VkApi', [
 
 app.factory('WordsService', [
   '$q', '$http', 'VkApi', function($q, $http, storage) {
-    var countChars, countWords, initData, initToday, loadPdfFile, loadTextFile, periods, processText, resetData, save, self, service, shift, stripHtml, today, update;
+    var chars, countChars, countChars2, countWords, countWords2, initData, initToday, loadPdfFile, loadTextFile, periods, processText, resetData, save, self, service, shift, spaces, stripHtml, today, update;
     self = this;
     service = {
       init: function(scope) {
-        var deferred;
+        var deferred, _init;
         self.scope = scope;
         deferred = $q.defer();
-        storage.init(self.scope).then(function() {
+        _init = storage.init(self.scope);
+        if (!_init) {
+          return;
+        }
+        _init.then(function() {
           return storage.getValue(self.scope, 'data').then(function(data) {
             if (data) {
               data = JSON.parse(data);
@@ -79,7 +82,7 @@ app.factory('WordsService', [
             if (data) {
               service.data = data;
               if (update()) {
-                save(function() {
+                save().then(function() {
                   return deferred.resolve();
                 });
                 return;
@@ -152,7 +155,7 @@ app.factory('WordsService', [
       var chars, i, p, words;
       chars = countChars(text);
       words = countWords(text);
-      service.lastSubmit = {
+      self.scope.lastSubmit = {
         chars: chars,
         words: words
       };
@@ -250,22 +253,61 @@ app.factory('WordsService', [
         }
       ];
     };
-    save = function(cb) {
-      var p;
-      p = storage.setValue(self.scope, 'data', JSON.stringify(service.data));
-      if (cb) {
-        return p.then(cb);
-      }
+    save = function() {
+      var deferred;
+      deferred = $q.defer();
+      storage.setValue(self.scope, 'data', JSON.stringify(service.data)).then(function() {
+        return deferred.resolve();
+      });
+      return deferred.promise;
     };
+    chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
+    spaces = " \t\r\n.,:;";
     countChars = function(s) {
+      var c, n, _i, _len;
+      n = 0;
+      for (_i = 0, _len = s.length; _i < _len; _i++) {
+        c = s[_i];
+        if (-1 !== chars.indexOf(c)) {
+          n += 1;
+        }
+      }
+      return n;
+    };
+    countWords = function(s) {
+      var c, n, w, _i, _len;
+      n = 0;
+      w = false;
+      for (_i = 0, _len = s.length; _i < _len; _i++) {
+        c = s[_i];
+        if (-1 !== chars.indexOf(c)) {
+          w = true;
+        } else {
+          if (-1 !== spaces.indexOf(c)) {
+            if (w) {
+              n += 1;
+            }
+            w = false;
+          }
+        }
+      }
+      if (w) {
+        n += 1;
+      }
+      return n;
+    };
+    countChars2 = function(s) {
+      indexOf();
       s = s.replace(/[^a-zA-Z0-9абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ]/gi, "");
       return s.length;
     };
-    countWords = function(s) {
+    countWords2 = function(s) {
+      s = s.replace(/\n/gi, " ");
+      s = s.replace(/\r/gi, " ");
       s = s.replace(/[\s\.,\?\!;:]/gi, " ");
       s = s.replace(/[^a-zA-Z0-9абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ\s]/gi, "");
       s = s.replace(/(^\s*)|(\s*$)/gi, "");
-      s = s.replace(/[ ]{2,}/gi, " ");
+      s = s.replace(/\s{2,}/gi, " ");
       return s.split(' ').length;
     };
     stripHtml = function(html) {
@@ -283,19 +325,24 @@ app.factory('WordsService', [
 
 app.controller('WordsController', [
   '$scope', 'WordsService', function($scope, service) {
+    var _init;
     $scope.reset = function() {
       if (!confirm('Уверены?')) {
         return;
       }
+      delete $scope.lastSubmit;
       return service.reset();
     };
     $scope.processFiles = function(files) {
       return service.loadFiles(files);
     };
-    return service.init($scope).then(function() {
-      $scope.data = service.data;
-      return $scope.loaded = true;
-    });
+    _init = service.init($scope);
+    if (_init) {
+      return _init.then(function() {
+        $scope.data = service.data;
+        return $scope.loaded = true;
+      });
+    }
   }
 ]);
 
