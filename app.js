@@ -34,9 +34,6 @@ app.factory('VkApi', [
           test_mode: service.test_mode
         }, function(data) {
           return scope.$apply(function() {
-            if (data.response && data.response === 1) {
-              console.log(data);
-            }
             return deferred.resolve();
           });
         });
@@ -135,9 +132,17 @@ app.factory('WordsService', [
       var reader;
       reader = new FileReader();
       reader.onload = function(e) {
-        return processText(e.target.result);
+        var charDet;
+        charDet = jschardet.detect(e.target.result);
+        if (charDet) {
+          reader = new FileReader();
+          reader.onload = function(e) {
+            return processText(e.target.result);
+          };
+          return reader.readAsText(file, charDet.encoding);
+        }
       };
-      return reader.readAsText(file);
+      return reader.readAsBinaryString(file);
     };
     loadPdfFile = function(file) {
       var reader;

@@ -17,8 +17,8 @@ app.factory 'VkApi', ['$q', ($q) ->
       deferred = $q.defer()
       VK.api 'storage.set', {key:key, value:value, test_mode:service.test_mode}, (data) ->
         scope.$apply ->
-          if data.response && data.response == 1
-            console.log data
+#          if data.response && data.response == 1
+#            console.log data
           deferred.resolve()
       deferred.promise
     init: ->
@@ -84,8 +84,14 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
   loadTextFile = (file) ->
     reader = new FileReader()
     reader.onload = (e) ->
-      processText e.target.result
-    reader.readAsText file
+      #processText e.target.result
+      charDet = jschardet.detect(e.target.result)
+      if charDet
+        reader = new FileReader()
+        reader.onload = (e) ->
+          processText e.target.result
+        reader.readAsText file, charDet.encoding
+    reader.readAsBinaryString file
 
   loadPdfFile = (file) ->
     reader = new FileReader()
