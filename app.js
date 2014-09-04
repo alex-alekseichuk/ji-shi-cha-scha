@@ -99,8 +99,6 @@ app.factory('WordsService', [
             }
             return deferred.resolve();
           }, function(error) {
-            initData();
-            initToday();
             return deferred.reject(error);
           });
         });
@@ -364,8 +362,8 @@ app.controller('WordsController', [
         $scope.data = service.data;
         return $scope.mode = 'loaded';
       }, function(error) {
-        $scope.data = service.data;
-        return $scope.mode = 'loaded';
+        $scope.mode = 'unavailable';
+        return $scope.error = error;
       });
     }
   }
