@@ -66,6 +66,8 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
             initData()
           deferred.resolve()
         , (error) ->
+          initData() # TODO: remove this
+          initToday() # TODO: remove this
           deferred.reject error
       deferred.promise
 
@@ -273,8 +275,11 @@ app.controller 'WordsController', ['$scope', 'WordsService', ($scope, service) -
       $scope.data = service.data
       $scope.mode = 'loaded'
     , (error) ->
-      $scope.mode = 'unavailable'
-      $scope.error = error
+      # TODO: recomment this
+      $scope.data = service.data
+      $scope.mode = 'loaded'
+      #$scope.mode = 'unavailable'
+      #$scope.error = error
 ]
 
 

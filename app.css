@@ -1,10 +1,18 @@
 
+/* common */
+.panel {
+    padding: 5px;
+}
+
+
+
+/* drop-able zone*/
 .drop {
     width:300px;
-    height:150px;
+    height:155px;
     background-color: #EEE;
 
-    line-height: 140px;
+    line-height: 145px;
     text-align: center;
 
     border: dashed 1px #999;
@@ -13,19 +21,46 @@
     -moz-border-radius: 10px;
     border-radius: 10px;
 }
-
 .over {
-    background-color: #CСС;
+    background-color: #CCC;
     border-color: #999;
 }
 
+/* loading */
 .loading {
     width:700px;
     height:500px;
     padding-top: 250px;
     text-align: center;
+    color: #777;
 }
 
+
+/* summary table in header*/
+.summary {
+    width:auto;
+}
+.summary td {
+    padding-left: 3px;
+    padding-right: 3px;
+}
+.summary th {
+    padding-left: 3px;
+    padding-right: 3px;
+    padding-right:20px
+}
+.summary .total {
+    /*background-color: rgb(223, 240, 216);*/
+}
+.summary .today {
+    /*background-color: rgb(217, 237, 247);*/
+}
+.summary th {
+    color: #777;
+}
+
+
+/* result of processing*/
 .result {
     width:151px;
     color:white;
@@ -46,3 +81,5 @@
 .result-label {
     font-size: 14px;
 }
+
+

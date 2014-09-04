@@ -14,10 +14,25 @@
         <div ng-show="mode=='unavailable'" class="ng-hide loading"><h3>API ВКонтакте для вас временно недоступен.</h3><p class="small muted">{{error}}</p><h3>Попробуйте чуть позже.</h3></div>
         <div ng-show="mode=='loaded'" class="ng-hide">
             <section class="panel">
-                Вы уже набрали:
-                {{data.chars}} знаков
-                {{data.words}} слов
-                <button ng-click="reset()" class="btn btn-danger">Очистить</button>
+                <h4>Вы уже набрали:</h4>
+                <table class="pull-left summary">
+                    <tr class="total">
+                        <th>Всего</th>
+                        <td class="pull-right">{{data.words}}</td>
+                        <td>слова</td>
+                        <td class="pull-right">{{data.chars}}</td>
+                        <td>знака</td>
+                    </tr>
+                    <tr class="today">
+                        <th>За сегодня</th>
+                        <td class="pull-right"><span>{{data.today.words}}</span></td>
+                        <td>слова</td>
+                        <td class="pull-right"><span>{{data.today.chars}}</span></td>
+                        <td>знака</td>
+                    </tr>
+                </table>
+                <button ng-click="reset()" class="pull-right btn btn-danger">Очистить</button>
+                <div class="clearfix"></div>
             </section>
 
             <section class="hero-unit">
@@ -41,11 +56,6 @@
             </section>
 
             <section class="panel">
-                <div>
-                    За сегодня:
-                    {{data.today.chars}} знаков
-                    {{data.today.words}} слов
-                </div>
                 <div>
                     За неделю:
                     {{data.periods[0].words}} слов
