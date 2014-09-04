@@ -3,60 +3,68 @@
 <head lang="ru">
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Жи-ши, ча-ща</title>
     <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
     <link rel="stylesheet" type="text/css" href="app.css" />
 </head>
 <body ng-controller="WordsController as ctrl">
-    <div ng-hide="loaded">Loading...</div>
-    <div ng-show="loaded" class="ng-hide">
-        <section class="panel">
-            Вы уже набрали:
-            {{data.chars}} знаков
-            {{data.words}} слов
-            <button ng-click="reset()" class="btn">Очистить</button>
-        </section>
+    <div class="container">
+        <h3 ng-show="mode=='loading'" class="loading">Загрузка...</h3>
+        <div ng-show="mode=='unavailable'" class="ng-hide loading"><h3>API ВКонтакте для вас временно недоступен.</h3><p class="small muted">{{error}}</p><h3>Попробуйте чуть позже.</h3></div>
+        <div ng-show="mode=='loaded'" class="ng-hide">
+            <section class="panel">
+                Вы уже набрали:
+                {{data.chars}} знаков
+                {{data.words}} слов
+                <button ng-click="reset()" class="btn btn-danger">Очистить</button>
+            </section>
 
-        <section class="panel">
-            Добавить новый материал на обработку:
-            <!--<div ng-show="false">-->
-                <!--<input type="url" ng-model="url" tooltip="URL текста" placeholder="URL текста" />-->
-                <!--<button ng-click="processUrl()" class="btn">Посчитать</button>-->
-            <!--</div>-->
-            <div class="drop" drop-files x-on-drop="processFiles(files)">
-                Перенесите сюда прочитанный файл
-            </div>
-            <div ng-show="lastSubmit">
-                {{lastSubmit.chars}} знаков
-                {{lastSubmit.words}} слов
-            </div>
-        </section>
+            <section class="hero-unit">
+                <h4>Добавить новый материал на обработку:</h4>
+                <!--<div ng-show="false">-->
+                    <!--<input type="url" ng-model="url" tooltip="URL текста" placeholder="URL текста" />-->
+                    <!--<button ng-click="processUrl()" class="btn">Посчитать</button>-->
+                <!--</div>-->
+                <div class="drop pull-left" drop-files x-on-drop="processFiles(files)">
+                    Перенесите сюда прочитанный файл(ы)
+                </div>
+                <div class="result pull-left" ng-show="lastSubmit">
+                    <div class="result-top">
+                        {{lastSubmit.words}} <div class="result-label">слов</div>
+                    </div>
+                    <div class="result-bottom">
+                        {{lastSubmit.chars}} <div class="result-label">знаков</div>
+                    </div>
+                </div>
+                <div class="clearfix"></div>
+            </section>
 
-        <section class="panel">
-            <div>
-                За сегодня:
-                {{data.today.chars}} знаков
-                {{data.today.words}} слов
-            </div>
-            <div>
-                За неделю:
-                {{data.periods[0].words}} слов
-            </div>
-            <div>
-                За месяц:
-                {{data.periods[1].words}} слов
-            </div>
-            <div>
-                За полгода:
-                {{data.periods[2].words}} слов
-            </div>
-            <div>
-                За год:
-                {{data.periods[3].words}} слов
-            </div>
-        </section>
+            <section class="panel">
+                <div>
+                    За сегодня:
+                    {{data.today.chars}} знаков
+                    {{data.today.words}} слов
+                </div>
+                <div>
+                    За неделю:
+                    {{data.periods[0].words}} слов
+                </div>
+                <div>
+                    За месяц:
+                    {{data.periods[1].words}} слов
+                </div>
+                <div>
+                    За полгода:
+                    {{data.periods[2].words}} слов
+                </div>
+                <div>
+                    За год:
+                    {{data.periods[3].words}} слов
+                </div>
+            </section>
 
+        </div>
     </div>
 
     <script src="//vk.com/js/api/xd_connection.js?2" type="text/javascript"></script>

@@ -3,13 +3,46 @@
     width:300px;
     height:150px;
     background-color: #EEE;
-    border: solid 1px #999;
+
     line-height: 140px;
     text-align: center;
+
+    border: dashed 1px #999;
+
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
 }
 
 .over {
-    background-color: #999;
-    border-color: #666;
+    background-color: #CСС;
+    border-color: #999;
 }
 
+.loading {
+    width:700px;
+    height:500px;
+    padding-top: 250px;
+    text-align: center;
+}
+
+.result {
+    width:151px;
+    color:white;
+    font: 18px Arial,sans-serif;
+    margin-left: 40px;
+    text-align: center;
+}
+.result-top {
+    height:79px;
+    background: url(img/result-top.png) no-repeat;
+    padding-top:23px;
+}
+.result-bottom {
+    height:78px;
+    background: url(img/result-bottom.png) no-repeat;
+    padding-top:17px;
+}
+.result-label {
+    font-size: 14px;
+}

@@ -11,15 +11,19 @@ app.factory 'VkApi', ['$q', ($q) ->
       deferred = $q.defer()
       VK.api 'storage.get', {key:key, test_mode:service.test_mode}, (data) ->
         scope.$apply ->
-          deferred.resolve data.response
+          if data.error
+            deferred.reject data.error.error_msg
+          else
+            deferred.resolve data.response
       deferred.promise
     setValue: (scope, key, value) ->
       deferred = $q.defer()
       VK.api 'storage.set', {key:key, value:value, test_mode:service.test_mode}, (data) ->
         scope.$apply ->
-#          if data.response && data.response == 1
-#            console.log data
-          deferred.resolve()
+          if data.error || data.response != 1
+            deferred.reject data.error.error_msg
+          else
+            deferred.resolve()
       deferred.promise
     init: ->
       deferred = $q.defer()
@@ -55,10 +59,14 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
             if update()
               save().then ->
                 deferred.resolve()
+              , (error) ->
+                deferred.reject error
               return
           else
             initData()
           deferred.resolve()
+        , (error) ->
+          deferred.reject error
       deferred.promise
 
     loadFiles: (files) ->
@@ -188,6 +196,8 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
     deferred = $q.defer()
     storage.setValue(self.scope, 'data', JSON.stringify(service.data)).then ->
       deferred.resolve()
+    , (error) ->
+      deferred.reject error
     deferred.promise
 
   chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
@@ -256,11 +266,15 @@ app.controller 'WordsController', ['$scope', 'WordsService', ($scope, service) -
     service.loadFiles files
 
   # init
+  $scope.mode = 'loading'
   _init = service.init($scope)
   if _init
     _init.then ->
       $scope.data = service.data
-      $scope.loaded = true
+      $scope.mode = 'loaded'
+    , (error) ->
+      $scope.mode = 'unavailable'
+      $scope.error = error
 ]
 
 
@@ -307,5 +321,3 @@ app.directive 'dropFiles', ->
       false
     ,
       false
-
-

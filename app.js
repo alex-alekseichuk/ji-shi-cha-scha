@@ -20,7 +20,11 @@ app.factory('VkApi', [
           test_mode: service.test_mode
         }, function(data) {
           return scope.$apply(function() {
-            return deferred.resolve(data.response);
+            if (data.error) {
+              return deferred.reject(data.error.error_msg);
+            } else {
+              return deferred.resolve(data.response);
+            }
           });
         });
         return deferred.promise;
@@ -34,7 +38,11 @@ app.factory('VkApi', [
           test_mode: service.test_mode
         }, function(data) {
           return scope.$apply(function() {
-            return deferred.resolve();
+            if (data.error || data.response !== 1) {
+              return deferred.reject(data.error.error_msg);
+            } else {
+              return deferred.resolve();
+            }
           });
         });
         return deferred.promise;
@@ -81,6 +89,8 @@ app.factory('WordsService', [
               if (update()) {
                 save().then(function() {
                   return deferred.resolve();
+                }, function(error) {
+                  return deferred.reject(error);
                 });
                 return;
               }
@@ -88,6 +98,8 @@ app.factory('WordsService', [
               initData();
             }
             return deferred.resolve();
+          }, function(error) {
+            return deferred.reject(error);
           });
         });
         return deferred.promise;
@@ -263,6 +275,8 @@ app.factory('WordsService', [
       deferred = $q.defer();
       storage.setValue(self.scope, 'data', JSON.stringify(service.data)).then(function() {
         return deferred.resolve();
+      }, function(error) {
+        return deferred.reject(error);
       });
       return deferred.promise;
     };
@@ -341,11 +355,15 @@ app.controller('WordsController', [
     $scope.processFiles = function(files) {
       return service.loadFiles(files);
     };
+    $scope.mode = 'loading';
     _init = service.init($scope);
     if (_init) {
       return _init.then(function() {
         $scope.data = service.data;
-        return $scope.loaded = true;
+        return $scope.mode = 'loaded';
+      }, function(error) {
+        $scope.mode = 'unavailable';
+        return $scope.error = error;
       });
     }
   }
