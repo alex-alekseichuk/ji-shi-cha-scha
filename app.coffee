@@ -53,6 +53,7 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
       return unless _init
       _init.then ->
         storage.getValue(self.scope, 'data').then (data) ->
+          console.log data
           data = JSON.parse(data) if data
           if (data)
             service.data = data
@@ -66,8 +67,8 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
             initData()
           deferred.resolve()
         , (error) ->
-          #initData() # TODO: remove this
-          #initToday() # TODO: remove this
+          initTestData() # TODO: remove this
+          initToday() # TODO: remove this
           deferred.reject error
       deferred.promise
 
@@ -123,18 +124,37 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
 
     update()
 
-    service.data.today.chars += chars
-    service.data.today.words += words
-
+    # increase total
     service.data.chars += chars
     service.data.words += words
 
+    # increase today
+    service.data.today.chars += chars
+    service.data.today.words += words
+
+    # increase stats.
     for i of service.data.periods
       p = service.data.periods[i]
       p.data[0] += words
       p.words += words
 
-    #$scope.$apply()
+    # update level
+    l = service.data.level
+    total = service.data.words
+    _now = minutesNow()
+    if l.limit <= total
+      l.n += 1
+
+      l.limit = total + (total - l.words) * 3
+      if l.period && l.t && (_now - l.t) > 0
+        l.limit = l.limit * l.period * 2 / (_now - l.t)
+
+      l.words = total
+      if l.t
+        l.period = _now - l.t
+        l.period = 1 if l.period <= 0
+      l.t = _now
+
     save()
 
 
@@ -164,6 +184,11 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
 
 
   update = ->
+    unless service.data.v
+      service.data.v = 1
+      service.data.reg = today()
+      resetLevel()
+
     t = today()
     if service.data.today
       if service.data.today.t != t
@@ -182,8 +207,23 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
       chars: 0
 
   initData = ->
-    service.data = {}
+    service.data = {
+      reg: today()
+      v: 1
+    }
     resetData()
+  initTestData = ->
+    service.data = {
+      reg: today()
+      v: 1
+    }
+    resetData()
+    service.data.words = 2000
+    service.data.level =
+      n: 7          # current level
+      limit: 5000   # words limit for next level
+      words: 1000   # words was on current level started
+
   resetData = ->
     service.data.chars = 0
     service.data.words = 0
@@ -193,6 +233,12 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
       {x:0,data:[0,0,0,0,0,],words:0},
       {x:0,data:[0,0,0,0,0,0,0,0,0,0,0,0],words:0}
     ]
+    resetLevel()
+  resetLevel = ->
+    service.data.level =
+      n: 0          # current level
+      limit: 5000   # words limit for next level
+      words: 0      # words was on current level started
 
   save = ->
     deferred = $q.defer()
@@ -245,11 +291,20 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
   today = ->
     # abs day from 1970
     parseInt((new Date().getTime() - new Date(1970, 0, 5).getTime()) / 86400000)
+  minutesNow = ->
+    # abs seconds from 1970
+    parseInt((new Date().getTime() - new Date(1970, 0, 5).getTime()) / 60000)
 
   service
 ]
 
-app.controller 'WordsController', ['$scope', 'WordsService', ($scope, service) ->
+app.constant 'Strings', {
+  'words': ['слово', 'слова', 'слов']
+  'chars': ['знак', 'знака', 'знаков']
+}
+
+
+app.controller 'WordsController', ['$scope', 'WordsService', 'Strings', ($scope, service, strings) ->
   $scope.reset = ->
     return unless confirm('Уверены?')
     #$scope.$apply -> service.reset()
@@ -267,6 +322,20 @@ app.controller 'WordsController', ['$scope', 'WordsService', ($scope, service) -
   $scope.processFiles = (files) ->
     service.loadFiles files
 
+  $scope.decline = (n, key) ->
+    s = strings[key]
+    q = n / 10
+    r = n % 10
+    return s[0] if r == 1 && q != 1
+    return s[1] if 2 <= r && r <= 4 && q != 1
+    s[2]
+  $scope.decline3 = (n, s1, s2, s3) ->
+    q = n / 10
+    r = n % 10
+    return s1 if r == 1 && q != 1
+    return s2 if 2 <= r && r <= 4 && q != 1
+    s3
+
   # init
   $scope.mode = 'loading'
   _init = service.init($scope)
@@ -276,10 +345,10 @@ app.controller 'WordsController', ['$scope', 'WordsService', ($scope, service) -
       $scope.mode = 'loaded'
     , (error) ->
       # TODO: recomment this
-      #$scope.data = service.data
-      #$scope.mode = 'loaded'
-      $scope.mode = 'unavailable'
-      $scope.error = error
+      $scope.data = service.data
+      $scope.mode = 'loaded'
+      #$scope.mode = 'unavailable'
+      #$scope.error = error
 ]
 
 

@@ -68,7 +68,7 @@ app.factory('VkApi', [
 
 app.factory('WordsService', [
   '$q', '$http', 'VkApi', function($q, $http, storage) {
-    var chars, countChars, countChars2, countWords, countWords2, initData, initToday, loadPdfFile, loadTextFile, periods, processText, resetData, save, self, service, shift, spaces, stripHtml, today, update;
+    var chars, countChars, countChars2, countWords, countWords2, initData, initTestData, initToday, loadPdfFile, loadTextFile, minutesNow, periods, processText, resetData, resetLevel, save, self, service, shift, spaces, stripHtml, today, update;
     self = this;
     service = {
       init: function(scope) {
@@ -81,6 +81,7 @@ app.factory('WordsService', [
         }
         _init.then(function() {
           return storage.getValue(self.scope, 'data').then(function(data) {
+            console.log(data);
             if (data) {
               data = JSON.parse(data);
             }
@@ -99,6 +100,8 @@ app.factory('WordsService', [
             }
             return deferred.resolve();
           }, function(error) {
+            initTestData();
+            initToday();
             return deferred.reject(error);
           });
         });
@@ -169,7 +172,7 @@ app.factory('WordsService', [
       return reader.readAsArrayBuffer(file);
     };
     processText = function(text) {
-      var chars, i, p, words;
+      var chars, i, l, p, total, words, _now;
       chars = countChars(text);
       words = countWords(text);
       self.scope.lastSubmit = {
@@ -177,14 +180,32 @@ app.factory('WordsService', [
         words: words
       };
       update();
-      service.data.today.chars += chars;
-      service.data.today.words += words;
       service.data.chars += chars;
       service.data.words += words;
+      service.data.today.chars += chars;
+      service.data.today.words += words;
       for (i in service.data.periods) {
         p = service.data.periods[i];
         p.data[0] += words;
         p.words += words;
+      }
+      l = service.data.level;
+      total = service.data.words;
+      _now = minutesNow();
+      if (l.limit <= total) {
+        l.n += 1;
+        l.limit = total + (total - l.words) * 3;
+        if (l.period && l.t && (_now - l.t) > 0) {
+          l.limit = l.limit * l.period * 2 / (_now - l.t);
+        }
+        l.words = total;
+        if (l.t) {
+          l.period = _now - l.t;
+          if (l.period <= 0) {
+            l.period = 1;
+          }
+        }
+        l.t = _now;
       }
       return save();
     };
@@ -223,6 +244,11 @@ app.factory('WordsService', [
     };
     update = function() {
       var t;
+      if (!service.data.v) {
+        service.data.v = 1;
+        service.data.reg = today();
+        resetLevel();
+      }
       t = today();
       if (service.data.today) {
         if (service.data.today.t !== t) {
@@ -244,13 +270,29 @@ app.factory('WordsService', [
       };
     };
     initData = function() {
-      service.data = {};
+      service.data = {
+        reg: today(),
+        v: 1
+      };
       return resetData();
+    };
+    initTestData = function() {
+      service.data = {
+        reg: today(),
+        v: 1
+      };
+      resetData();
+      service.data.words = 2000;
+      return service.data.level = {
+        n: 7,
+        limit: 5000,
+        words: 1000
+      };
     };
     resetData = function() {
       service.data.chars = 0;
       service.data.words = 0;
-      return service.data.periods = [
+      service.data.periods = [
         {
           x: 0,
           data: [0, 0, 0, 0, 0, 0],
@@ -269,6 +311,14 @@ app.factory('WordsService', [
           words: 0
         }
       ];
+      return resetLevel();
+    };
+    resetLevel = function() {
+      return service.data.level = {
+        n: 0,
+        limit: 5000,
+        words: 0
+      };
     };
     save = function() {
       var deferred;
@@ -338,12 +388,20 @@ app.factory('WordsService', [
     today = function() {
       return parseInt((new Date().getTime() - new Date(1970, 0, 5).getTime()) / 86400000);
     };
+    minutesNow = function() {
+      return parseInt((new Date().getTime() - new Date(1970, 0, 5).getTime()) / 60000);
+    };
     return service;
   }
 ]);
 
+app.constant('Strings', {
+  'words': ['слово', 'слова', 'слов'],
+  'chars': ['знак', 'знака', 'знаков']
+});
+
 app.controller('WordsController', [
-  '$scope', 'WordsService', function($scope, service) {
+  '$scope', 'WordsService', 'Strings', function($scope, service, strings) {
     var _init;
     $scope.reset = function() {
       if (!confirm('Уверены?')) {
@@ -355,6 +413,31 @@ app.controller('WordsController', [
     $scope.processFiles = function(files) {
       return service.loadFiles(files);
     };
+    $scope.decline = function(n, key) {
+      var q, r, s;
+      s = strings[key];
+      q = n / 10;
+      r = n % 10;
+      if (r === 1 && q !== 1) {
+        return s[0];
+      }
+      if (2 <= r && r <= 4 && q !== 1) {
+        return s[1];
+      }
+      return s[2];
+    };
+    $scope.decline3 = function(n, s1, s2, s3) {
+      var q, r;
+      q = n / 10;
+      r = n % 10;
+      if (r === 1 && q !== 1) {
+        return s1;
+      }
+      if (2 <= r && r <= 4 && q !== 1) {
+        return s2;
+      }
+      return s3;
+    };
     $scope.mode = 'loading';
     _init = service.init($scope);
     if (_init) {
@@ -362,8 +445,8 @@ app.controller('WordsController', [
         $scope.data = service.data;
         return $scope.mode = 'loaded';
       }, function(error) {
-        $scope.mode = 'unavailable';
-        return $scope.error = error;
+        $scope.data = service.data;
+        return $scope.mode = 'loaded';
       });
     }
   }

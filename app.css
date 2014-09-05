@@ -3,7 +3,11 @@
 .panel {
     padding: 5px;
 }
-
+h1, h2, h3, h4 {
+    color: #777;
+    /*padding-top: 0px;*/
+    /*margin-top: 0px;*/
+}
 
 
 /* drop-able zone*/
@@ -83,3 +87,51 @@
 }
 
 
+/* stats */
+.stat-week {
+    width:240px;
+    background-color: rgb(223, 240, 216);
+    margin:2px;
+    padding-left: 10px;
+    padding-bottom: 5px;
+}
+.stat-month {
+    width:160px;
+    background-color: rgb(217, 237, 247);
+    margin:2px;
+    padding-left: 10px;
+    padding-bottom: 5px;
+}
+.stat-half {
+    width:160px;
+    background-color: rgb(223, 240, 216);
+    margin:2px;
+    padding-left: 10px;
+    padding-bottom: 5px;
+}
+.stat-year {
+    width:160px;
+    background-color: rgb(217, 237, 247);
+    margin:2px;
+    padding-left: 10px;
+    padding-bottom: 5px;
+}
+
+.level {
+    margin-left:50px;
+    margin-top:10px;
+    line-height:30px;
+    text-align: center;
+}
+.level span {
+    display: inline-block;
+    background-color: rgb(223, 240, 216);
+    border: solid 1px rgb(180, 200, 170);
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+    padding:5px;
+    width:40px;
+    text-align: center;
+    margin-right:5px;
+}

@@ -9,34 +9,39 @@
     <link rel="stylesheet" type="text/css" href="app.css" />
 </head>
 <body ng-controller="WordsController as ctrl">
-    <div class="container">
+    <div class="container-fluid">
         <h3 ng-show="mode=='loading'" class="loading">Загрузка...</h3>
         <div ng-show="mode=='unavailable'" class="ng-hide loading"><h3>API ВКонтакте для вас временно недоступен.</h3><p class="small muted">{{error}}</p><h3>Попробуйте чуть позже.</h3></div>
         <div ng-show="mode=='loaded'" class="ng-hide">
             <section class="panel">
-                <h4>Вы уже набрали:</h4>
-                <table class="pull-left summary">
-                    <tr class="total">
-                        <th>Всего</th>
-                        <td class="pull-right">{{data.words}}</td>
-                        <td>слова</td>
-                        <td class="pull-right">{{data.chars}}</td>
-                        <td>знака</td>
-                    </tr>
-                    <tr class="today">
-                        <th>За сегодня</th>
-                        <td class="pull-right"><span>{{data.today.words}}</span></td>
-                        <td>слова</td>
-                        <td class="pull-right"><span>{{data.today.chars}}</span></td>
-                        <td>знака</td>
-                    </tr>
-                </table>
+                <div class="pull-left">
+                    <h4>Вы уже набрали:</h4>
+                    <table class="pull-left summary">
+                        <tr class="total">
+                            <th>Всего</th>
+                            <td class="pull-right">{{data.words}}</td>
+                            <td>{{decline(data.words, 'words')}}</td>
+                            <td class="pull-right">{{data.chars}}</td>
+                            <td>{{decline(data.chars, 'chars')}}</td>
+                        </tr>
+                        <tr class="today">
+                            <th>За сегодня</th>
+                            <td class="pull-right"><span>{{data.today.words}}</span></td>
+                            <td>{{decline(data.today.words, 'words')}}</td>
+                            <td class="pull-right"><span>{{data.today.chars}}</span></td>
+                            <td>{{decline(data.today.chars, 'chars')}}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="pull-left level" title="{{data.level.limit-data.words}} слов до следующего уровня">
+                    <div><span>{{data.level.n}}</span> уровень</div>
+                    <code class="label label-info">{{data.level.limit-data.words}} слов до следующего уровня</code>
+                </div>
                 <button ng-click="reset()" class="pull-right btn btn-danger">Очистить</button>
                 <div class="clearfix"></div>
             </section>
-
-            <section class="hero-unit">
-                <h4>Добавить новый материал на обработку:</h4>
+            <section class="well well-small">
+                <h4 style="margin-top:0;">Добавить новый материал на обработку:</h4>
                 <!--<div ng-show="false">-->
                     <!--<input type="url" ng-model="url" tooltip="URL текста" placeholder="URL текста" />-->
                     <!--<button ng-click="processUrl()" class="btn">Посчитать</button>-->
@@ -46,32 +51,38 @@
                 </div>
                 <div class="result pull-left" ng-show="lastSubmit">
                     <div class="result-top">
-                        {{lastSubmit.words}} <div class="result-label">слов</div>
+                        {{lastSubmit.words}} <div class="result-label">{{decline(lastSubmit.words, 'words')}}</div>
                     </div>
                     <div class="result-bottom">
-                        {{lastSubmit.chars}} <div class="result-label">знаков</div>
+                        {{lastSubmit.chars}} <div class="result-label">{{decline(lastSubmit.chars, 'chars')}}</div>
                     </div>
                 </div>
                 <div class="clearfix"></div>
             </section>
 
-            <section class="panel">
-                <div>
-                    За неделю:
-                    {{data.periods[0].words}} слов
+            <section>
+                <h4>Статистика:</h4>
+                <div class="pull-left stat-week">
+                    <h4>За неделю</h4>
+                    {{data.periods[0].words}}
+                    {{decline(data.periods[0].words, 'words')}}
                 </div>
-                <div>
-                    За месяц:
-                    {{data.periods[1].words}} слов
+                <div class="pull-left stat-month">
+                    <h4>За месяц</h4>
+                    {{data.periods[1].words}}
+                    {{decline(data.periods[1].words, 'words')}}
                 </div>
-                <div>
-                    За полгода:
-                    {{data.periods[2].words}} слов
+                <div class="pull-left stat-half">
+                    <h4>За полгода</h4>
+                    {{data.periods[2].words}}
+                    {{decline(data.periods[2].words, 'words')}}
                 </div>
-                <div>
-                    За год:
-                    {{data.periods[3].words}} слов
+                <div class="pull-left stat-year">
+                    <h4>За год</h4>
+                    {{data.periods[3].words}}
+                    {{decline(data.periods[3].words, 'words')}}
                 </div>
+                <div class="clearfix"></div>
             </section>
 
         </div>
