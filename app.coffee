@@ -184,21 +184,34 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
 
 
   update = ->
+    needSave = false
     unless service.data.v
       service.data.v = 1
       service.data.reg = today()
-      resetLevel()
+      service.data.level =
+        n: 0          # current level
+        limit: service.data.words + 5000   # words limit for next level
+        words: service.data.words      # words was on current level started
+      needSave = true
+    if service.data.v == 1
+      service.data.v = 2
+      service.data.level =
+        n: 0          # current level
+        limit: service.data.words + 5000   # words limit for next level
+        words: service.data.words      # words was on current level started
+      needSave = true
 
     t = today()
     if service.data.today
       if service.data.today.t != t
         shift(t - service.data.today.t)
         initToday()
-        return true
+        needSave = true
     else
       initToday()
-      return true
-    return false
+      needSave = true
+
+    return needSave
 
   initToday = ->
     service.data.today =

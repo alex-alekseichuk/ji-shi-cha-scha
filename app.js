@@ -241,24 +241,39 @@ app.factory('WordsService', [
       }
     };
     update = function() {
-      var t;
+      var needSave, t;
+      needSave = false;
       if (!service.data.v) {
         service.data.v = 1;
         service.data.reg = today();
-        resetLevel();
+        service.data.level = {
+          n: 0,
+          limit: service.data.words + 5000,
+          words: service.data.words
+        };
+        needSave = true;
+      }
+      if (service.data.v === 1) {
+        service.data.v = 2;
+        service.data.level = {
+          n: 0,
+          limit: service.data.words + 5000,
+          words: service.data.words
+        };
+        needSave = true;
       }
       t = today();
       if (service.data.today) {
         if (service.data.today.t !== t) {
           shift(t - service.data.today.t);
           initToday();
-          return true;
+          needSave = true;
         }
       } else {
         initToday();
-        return true;
+        needSave = true;
       }
-      return false;
+      return needSave;
     };
     initToday = function() {
       return service.data.today = {
