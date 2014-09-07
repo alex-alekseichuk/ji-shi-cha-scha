@@ -192,10 +192,11 @@ app.factory('WordsService', [
       _now = minutesNow();
       if (l.limit <= total) {
         l.n += 1;
-        l.limit = total + (total - l.words) * 3;
+        l.limit = (total - l.words) * 3;
         if (l.period && l.t && (_now - l.t) > 0) {
-          l.limit = l.limit * l.period * 2 / (_now - l.t);
+          l.limit = parseInt(l.limit * l.period * 2 / (_now - l.t));
         }
+        l.limit += total;
         l.words = total;
         if (l.t) {
           l.period = _now - l.t;
@@ -467,6 +468,9 @@ app.controller('WordsController', [
 
 app.filter('longNum', function() {
   return function(input) {
+    if (!input) {
+      return '';
+    }
     return input.toString().replace(/(\d)(?=(?:\d{3})+$)/g, '$1 ');
   };
 });

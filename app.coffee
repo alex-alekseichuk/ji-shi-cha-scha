@@ -18,11 +18,12 @@ app.factory 'VkApi', ['$q', ($q) ->
       deferred.promise
     setValue: (scope, key, value) ->
       deferred = $q.defer()
-      VK.api 'storage.set', {key:key, value:value, test_mode:service.test_mode}, (data) -> scope.$apply ->
-        if data.error || data.response != 1
-          deferred.reject data.error.error_msg
-        else
-          deferred.resolve()
+      VK.api 'storage.set', {key:key, value:value, test_mode:service.test_mode}, (data) ->
+        scope.$apply ->
+          if data.error || data.response != 1
+            deferred.reject data.error.error_msg
+          else
+            deferred.resolve()
       deferred.promise
     init: ->
       deferred = $q.defer()
@@ -143,9 +144,10 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
     if l.limit <= total
       l.n += 1
 
-      l.limit = total + (total - l.words) * 3
+      l.limit = (total - l.words) * 3
       if l.period && l.t && (_now - l.t) > 0
-        l.limit = l.limit * l.period * 2 / (_now - l.t)
+        l.limit = parseInt(l.limit * l.period * 2 / (_now - l.t))
+      l.limit += total
 
       l.words = total
       if l.t
@@ -364,7 +366,8 @@ app.controller 'WordsController', ['$scope', 'WordsService', 'Strings', ($scope,
 
 app.filter 'longNum', ->
     (input) ->
-        input.toString().replace(/(\d)(?=(?:\d{3})+$)/g, '$1 ')
+      return '' unless input
+      input.toString().replace(/(\d)(?=(?:\d{3})+$)/g, '$1 ')
 
 app.directive 'dropFiles', ->
   restrict: 'A'

@@ -5,8 +5,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Жи-ши, ча-ща</title>
-    <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
-    <link rel="stylesheet" type="text/css" href="app.css" />
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="css/app.css" />
 </head>
 <body ng-controller="WordsController as ctrl">
     <div class="container-fluid">
@@ -33,9 +33,9 @@
                         </tr>
                     </table>
                 </div>
-                <div class="pull-left level" title="{{data.level.limit-data.words|longNum}} слов до следующего уровня">
+                <div class="pull-left level" title="{{(data.level.limit-data.words)|longNum}} слов до следующего уровня">
                     <div><span>{{data.level.n}}</span> уровень</div>
-                    <code class="label label-info">{{data.level.limit-data.words|longNum}} слов до следующего уровня</code>
+                    <code class="label label-info">{{(data.level.limit-data.words)|longNum}} слов до следующего уровня</code>
                 </div>
                 <button ng-click="reset()" class="pull-right btn btn-danger">Очистить</button>
                 <div class="clearfix"></div>
@@ -89,23 +89,23 @@
     </div>
 
     <script src="//vk.com/js/api/xd_connection.js?2" type="text/javascript"></script>
-    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular.min.js"></script>
+    <script src="js/angular.min.js"></script>
 
-    <script src="chardet/chardet.js"></script>
-    <script src="chardet/codingstatemachine.js"></script>
-    <script src="chardet/mbcssm.js"></script>
-    <script src="chardet/charsetprober.js"></script>
-    <script src="chardet/utf8prober.js"></script>
-    <script src="chardet/charsetgroupprober.js"></script>
-    <script src="chardet/sbcharsetprober.js"></script>
-    <script src="chardet/langcyrillicmodel.js"></script>
-    <script src="chardet/latin1prober.js"></script>
-    <script src="chardet/rugroupprober.js"></script>
-    <script src="chardet/universaldetector.js"></script>
+    <script src="js/chardet/chardet.js"></script>
+    <script src="js/chardet/codingstatemachine.js"></script>
+    <script src="js/chardet/mbcssm.js"></script>
+    <script src="js/chardet/charsetprober.js"></script>
+    <script src="js/chardet/utf8prober.js"></script>
+    <script src="js/chardet/charsetgroupprober.js"></script>
+    <script src="js/chardet/sbcharsetprober.js"></script>
+    <script src="js/chardet/langcyrillicmodel.js"></script>
+    <script src="js/chardet/latin1prober.js"></script>
+    <script src="js/chardet/rugroupprober.js"></script>
+    <script src="js/chardet/universaldetector.js"></script>
 
-    <script type="text/javascript" src="win1251.js"></script>
-    <script type="text/javascript" src="pdf.js"></script>
-    <script type="text/javascript" src="pdf.worker.js"></script>
+    <script type="text/javascript" src="js/win1251.js"></script>
+    <script type="text/javascript" src="js/pdf.js"></script>
+    <script type="text/javascript" src="js/pdf.worker.js"></script>
     <script type="text/javascript" src="app.js"></script>
 </body>
 </html>
