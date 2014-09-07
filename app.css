@@ -39,7 +39,7 @@ h1, h2, h3, h4 {
     color: #777;
 }
 
-.long-num {
+.longNum {
     text-wrap: none;
     font-weight: bold;
 }
