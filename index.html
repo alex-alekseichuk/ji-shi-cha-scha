@@ -19,23 +19,23 @@
                     <table class="pull-left summary">
                         <tr class="total">
                             <th>Всего</th>
-                            <td class="pull-right">{{data.words | long}}</td>
+                            <td class="pull-right">{{data.words}}</td>
                             <td>{{decline(data.words, 'words')}}</td>
-                            <td class="pull-right">{{data.chars | long}}</td>
+                            <td class="pull-right">{{data.chars}}</td>
                             <td>{{decline(data.chars, 'chars')}}</td>
                         </tr>
                         <tr class="today">
                             <th>За сегодня</th>
-                            <td class="pull-right"><span>{{data.today.words | long}}</span></td>
+                            <td class="pull-right"><span>{{data.today.words}}</span></td>
                             <td>{{decline(data.today.words, 'words')}}</td>
-                            <td class="pull-right"><span>{{data.today.chars | long}}</span></td>
+                            <td class="pull-right"><span>{{data.today.chars}}</span></td>
                             <td>{{decline(data.today.chars, 'chars')}}</td>
                         </tr>
                     </table>
                 </div>
-                <div class="pull-left level" title="{{data.level.limit-data.words | long}} слов до следующего уровня">
+                <div class="pull-left level" title="{{data.level.limit-data.words}} слов до следующего уровня">
                     <div><span>{{data.level.n}}</span> уровень</div>
-                    <code class="label label-info">{{data.level.limit-data.words | long}} слов до следующего уровня</code>
+                    <code class="label label-info">{{data.level.limit-data.words}} слов до следующего уровня</code>
                 </div>
                 <button ng-click="reset()" class="pull-right btn btn-danger">Очистить</button>
                 <div class="clearfix"></div>
@@ -51,10 +51,10 @@
                 </div>
                 <div class="result pull-left" ng-show="lastSubmit">
                     <div class="result-top">
-                        {{lastSubmit.words | long}} <div class="result-label">{{decline(lastSubmit.words, 'words')}}</div>
+                        {{lastSubmit.words}} <div class="result-label">{{decline(lastSubmit.words, 'words')}}</div>
                     </div>
                     <div class="result-bottom">
-                        {{lastSubmit.chars | long}} <div class="result-label">{{decline(lastSubmit.chars, 'chars')}}</div>
+                        {{lastSubmit.chars}} <div class="result-label">{{decline(lastSubmit.chars, 'chars')}}</div>
                     </div>
                 </div>
                 <div class="clearfix"></div>
@@ -64,22 +64,22 @@
                 <h4>Статистика:</h4>
                 <div class="pull-left stat-week">
                     <h4>За неделю</h4>
-                    {{data.periods[0].words | long}}
+                    {{data.periods[0].words}}
                     {{decline(data.periods[0].words, 'words')}}
                 </div>
                 <div class="pull-left stat-month">
                     <h4>За месяц</h4>
-                    {{data.periods[1].words | long}}
+                    {{data.periods[1].words}}
                     {{decline(data.periods[1].words, 'words')}}
                 </div>
                 <div class="pull-left stat-half">
                     <h4>За полгода</h4>
-                    {{data.periods[2].words | long}}
+                    {{data.periods[2].words}}
                     {{decline(data.periods[2].words, 'words')}}
                 </div>
                 <div class="pull-left stat-year">
                     <h4>За год</h4>
-                    {{data.periods[3].words | long}}
+                    {{data.periods[3].words}}
                     {{decline(data.periods[3].words, 'words')}}
                 </div>
                 <div class="clearfix"></div>
