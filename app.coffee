@@ -52,7 +52,7 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
       return unless _init
       _init.then ->
         storage.getValue(self.scope, 'data').then (data) ->
-          console.log data
+          #console.log data
           data = JSON.parse(data) if data
           if (data)
             service.data = data

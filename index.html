@@ -26,9 +26,9 @@
                         </tr>
                         <tr class="today">
                             <th>За сегодня</th>
-                            <td class="pull-right longNum">{{data.today.words}}</td>
+                            <td class="pull-right longNum">{{data.today.words|longNum}}</td>
                             <td>{{decline(data.today.words, 'words')}}</td>
-                            <td class="pull-right longNum">{{data.today.chars}}</td>
+                            <td class="pull-right longNum">{{data.today.chars|longNum}}</td>
                             <td>{{decline(data.today.chars, 'chars')}}</td>
                         </tr>
                     </table>

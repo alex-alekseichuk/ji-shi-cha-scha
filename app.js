@@ -81,7 +81,6 @@ app.factory('WordsService', [
         }
         _init.then(function() {
           return storage.getValue(self.scope, 'data').then(function(data) {
-            console.log(data);
             if (data) {
               data = JSON.parse(data);
             }
