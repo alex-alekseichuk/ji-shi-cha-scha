@@ -18,12 +18,12 @@ app.factory 'VkApi', ['$q', ($q) ->
       deferred.promise
     setValue: (scope, key, value) ->
       deferred = $q.defer()
-      VK.api 'storage.set', {key:key, value:value, test_mode:service.test_mode}, (data) ->
-        scope.$apply ->
-          if data.error || data.response != 1
-            deferred.reject data.error.error_msg
-          else
-            deferred.resolve()
+      VK.api 'storage.set', {key:key, value:value,
+          test_mode:service.test_mode}, (data) -> scope.$apply ->
+              if data.error || data.response != 1
+                deferred.reject data.error.error_msg
+              else
+                deferred.resolve()
       deferred.promise
     init: ->
       deferred = $q.defer()
@@ -364,6 +364,9 @@ app.controller 'WordsController', ['$scope', 'WordsService', 'Strings', ($scope,
       $scope.error = error
 ]
 
+app.filter('long', ->
+    (input) ->
+        input.replace(/(\d)(?=(?:\d{3})+$)/g, '$1 ')
 
 app.directive 'dropFiles', ->
   restrict: 'A'
