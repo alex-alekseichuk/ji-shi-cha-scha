@@ -364,7 +364,7 @@ app.controller 'WordsController', ['$scope', 'WordsService', 'Strings', ($scope,
 
 app.filter 'longNum', ->
     (input) ->
-        input.toString().replace(/(\d)(?=(?:\d{3})+$)/g, '$1 ')
+        '<span class="long-num">' + input.toString().replace(/(\d)(?=(?:\d{3})+$)/g, '$1 ') + '</span>'
 
 app.directive 'dropFiles', ->
   restrict: 'A'

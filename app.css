@@ -39,6 +39,10 @@ h1, h2, h3, h4 {
     color: #777;
 }
 
+.long-num {
+    text-wrap: none;
+    font-weight: bold;
+}
 
 /* summary table in header*/
 .summary {
