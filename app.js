@@ -467,7 +467,7 @@ app.controller('WordsController', [
 
 app.filter('long', function() {
   return function(input) {
-    return input.replace(/(\d)(?=(?:\d{3})+$)/g, '$1 ');
+    return input.toString().replace(/(\d)(?=(?:\d{3})+$)/g, '$1 ');
   };
 });
 
