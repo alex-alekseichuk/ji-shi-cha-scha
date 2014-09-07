@@ -362,7 +362,7 @@ app.controller 'WordsController', ['$scope', 'WordsService', 'Strings', ($scope,
       $scope.error = error
 ]
 
-app.filter 'long-num', ->
+app.filter 'long', ->
     (input) ->
         '<span class="long-num">' + input.toString().replace(/(\d)(?=(?:\d{3})+$)/g, '$1 ') + '</span>'
 
