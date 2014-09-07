@@ -366,7 +366,7 @@ app.controller 'WordsController', ['$scope', 'WordsService', 'Strings', ($scope,
 
 app.filter 'longNum', ->
     (input) ->
-      return '' unless input
+      return '0' unless input
       input.toString().replace(/(\d)(?=(?:\d{3})+$)/g, '$1 ')
 
 app.directive 'dropFiles', ->
