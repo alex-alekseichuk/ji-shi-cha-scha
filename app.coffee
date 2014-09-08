@@ -4,22 +4,38 @@
 
 app = angular.module 'wordsApp', []
 
-app.factory 'VkApi', ['$q', ($q) ->
+# used as a storage for saving values
+app.factory 'VkApi', ($q, $rootScope) ->
   service =
     test_mode: 1
-    getValue: (scope, key) ->
+    getValue: (key) ->
       deferred = $q.defer()
       VK.api 'storage.get', {key:key, test_mode:service.test_mode}, (data) ->
-        scope.$apply ->
+        $rootScope.$apply ->
+          if data.error
+            deferred.reject data.error.error_msg
+          else
+            if data.response
+              value = JSON.parse(data.response)
+            else
+              value = undefined
+            deferred.resolve value
+      deferred.promise
+    getData: (key) ->
+      deferred = $q.defer()
+      VK.api 'storage.get', {key:key, test_mode:service.test_mode}, (data) ->
+        $rootScope.$apply ->
           if data.error
             deferred.reject data.error.error_msg
           else
             deferred.resolve data.response
       deferred.promise
-    setValue: (scope, key, value) ->
+    setValue: (key, value) ->
+      service.setData key, JSON.stringify(value)
+    setData: (key, value) ->
       deferred = $q.defer()
       VK.api 'storage.set', {key:key, value:value, test_mode:service.test_mode}, (data) ->
-        scope.$apply ->
+        $rootScope.$apply ->
           if data.error || data.response != 1
             deferred.reject data.error.error_msg
           else
@@ -38,9 +54,54 @@ app.factory 'VkApi', ['$q', ($q) ->
       deferred.promise
 
   service
+
+# wraper around real storage to cache values in the local web storage
+# useful if VK API is temporary unavailable or works with delay
+app.factory 'LocalStorage', ['$q', 'VkApi', ($q, storage) ->
+  self = @
+  service =
+    getValue: (key) ->
+      deferred = $q.defer()
+      localValue = undefined
+      if self.hasWebStorage
+        localValue = JSON.parse(localStorage.getItem(key))
+      storage.getValue(key).then (value) ->
+        if localValue && (value._t < localValue._t)
+          deferred.resolve localValue
+        else
+          deferred.resolve value
+      , (error_msg) ->
+        if localValue
+          deferred.resolve localValue
+        else
+          deferred.reject error_msg
+      deferred.promise
+    setValue: (key, value) ->
+      deferred = $q.defer()
+      value._t = now()
+      storage.setValue(key, value).then ->
+        saveToLocalStorage key, value, deferred
+      , ->
+        saveToLocalStorage key, value, deferred
+      deferred.promise
+    init: ->
+      self.hasWebStorage = (typeof(Storage) != "undefined")
+      storage.init()
+
+  saveToLocalStorage = (key, value, deferred) ->
+    if self.hasWebStorage
+      localStorage.setItem(key, JSON.stringify(value))
+      console.log localStorage.getItem(key)
+    deferred.resolve()
+
+  now = ->
+    # abs seconds from 1970
+    parseInt((new Date().getTime() - new Date(1970, 0, 5).getTime()) / 1000)
+
+  service
 ]
 
-app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
+app.factory 'WordsService', ['$q', 'LocalStorage', ($q, storage) ->
   self = @
 
   # public interface
@@ -48,12 +109,12 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
     init: (scope) ->
       self.scope = scope
       deferred = $q.defer()
-      _init = storage.init(self.scope)
+      _init = storage.init()
       return unless _init
       _init.then ->
-        storage.getValue(self.scope, 'data').then (data) ->
+        storage.getValue('data').then (data) ->
+          #self.scope.$apply ->
           #console.log data
-          data = JSON.parse(data) if data
           if (data)
             service.data = data
             if update()
@@ -66,8 +127,6 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
             initData()
           deferred.resolve()
         , (error) ->
-#          initTestData() # TODO: remove this
-#          initToday() # TODO: remove this
           deferred.reject error
       deferred.promise
 
@@ -255,9 +314,11 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
 
   save = ->
     deferred = $q.defer()
-    storage.setValue(self.scope, 'data', JSON.stringify(service.data)).then ->
+    storage.setValue('data', service.data).then ->
+      #self.scope.$apply ->
       deferred.resolve()
     , (error) ->
+      #self.scope.$apply ->
       deferred.reject error
     deferred.promise
 
@@ -283,19 +344,6 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
     n += 1 if w
     n
 
-  countChars2 = (s) ->
-    indexOf()
-    s = s.replace(/[^a-zA-Z0-9абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ]/gi,"")
-    s.length
-  countWords2 = (s) ->
-    s = s.replace(/\n/gi," ")
-    s = s.replace(/\r/gi," ")
-    s = s.replace(/[\s\.,\?\!;:]/gi," ") # spaces between words
-    s = s.replace(/[^a-zA-Z0-9абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ\s]/gi,"")
-    s = s.replace(/(^\s*)|(\s*$)/gi,"") # exclude start and end white-space
-    s = s.replace(/\s{2,}/gi," ") # 2 or more space to 1
-    s.split(' ').length
-
   stripHtml = (html) ->
     tmp = document.createElement("DIV")
     tmp.innerHTML = html
@@ -305,7 +353,7 @@ app.factory 'WordsService', ['$q', '$http', 'VkApi', ($q, $http, storage) ->
     # abs day from 1970
     parseInt((new Date().getTime() - new Date(1970, 0, 5).getTime()) / 86400000)
   minutesNow = ->
-    # abs seconds from 1970
+    # abs minutes from 1970
     parseInt((new Date().getTime() - new Date(1970, 0, 5).getTime()) / 60000)
 
   service
@@ -315,7 +363,6 @@ app.constant 'Strings', {
   'words': ['слово', 'слова', 'слов']
   'chars': ['знак', 'знака', 'знаков']
 }
-
 
 app.controller 'WordsController', ['$scope', 'WordsService', 'Strings', ($scope, service, strings) ->
   $scope.reset = ->
@@ -357,9 +404,6 @@ app.controller 'WordsController', ['$scope', 'WordsService', 'Strings', ($scope,
       $scope.data = service.data
       $scope.mode = 'loaded'
     , (error) ->
-      # TODO: recomment this
-#      $scope.data = service.data
-#      $scope.mode = 'loaded'
       $scope.mode = 'unavailable'
       $scope.error = error
 ]
