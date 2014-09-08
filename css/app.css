@@ -13,10 +13,10 @@ h1, h2, h3, h4 {
 /* drop-able zone*/
 .drop {
     width:300px;
-    height:155px;
+    height:80px;
     background-color: #EEE;
 
-    line-height: 145px;
+    line-height: 80px;
     text-align: center;
 
     border: dashed 1px #999;
@@ -29,6 +29,20 @@ h1, h2, h3, h4 {
     background-color: #CCC;
     border-color: #999;
 }
+
+.paste {
+    margin-top: 10px;
+}
+.paste button {
+    margin-left:10px;
+}
+.paste textarea {
+    width:300px;
+    height: 50px;
+    resize: none;
+}
+
+
 
 /* loading */
 .loading {
@@ -139,3 +153,4 @@ h1, h2, h3, h4 {
     text-align: center;
     margin-right:5px;
 }
+

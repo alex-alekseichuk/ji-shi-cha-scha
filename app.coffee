@@ -91,7 +91,6 @@ app.factory 'LocalStorage', ['$q', 'VkApi', ($q, storage) ->
   saveToLocalStorage = (key, value, deferred) ->
     if self.hasWebStorage
       localStorage.setItem(key, JSON.stringify(value))
-      console.log localStorage.getItem(key)
     deferred.resolve()
 
   now = ->
@@ -136,6 +135,8 @@ app.factory 'WordsService', ['$q', 'LocalStorage', ($q, storage) ->
           loadTextFile file
         else if file.type.match('application/pdf')
           loadPdfFile file
+    loadText: (text) ->
+      processText(text)
     reset: ->
       resetData()
       initToday()
@@ -175,6 +176,8 @@ app.factory 'WordsService', ['$q', 'LocalStorage', ($q, storage) ->
   processText = (text) ->
     chars = countChars(text)
     words = countWords(text)
+
+    return if words < 10
 
     self.scope.lastSubmit =
       chars: chars
@@ -406,6 +409,12 @@ app.controller 'WordsController', ['$scope', 'WordsService', 'Strings', ($scope,
     , (error) ->
       $scope.mode = 'unavailable'
       $scope.error = error
+
+  $scope.$watch 'text', (text) ->
+    if text
+      $scope.text = ''
+      service.loadText text
+  , true
 ]
 
 app.filter 'longNum', ->

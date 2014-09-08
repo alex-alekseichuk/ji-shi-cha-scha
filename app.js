@@ -136,7 +136,6 @@ app.factory('LocalStorage', [
     saveToLocalStorage = function(key, value, deferred) {
       if (self.hasWebStorage) {
         localStorage.setItem(key, JSON.stringify(value));
-        console.log(localStorage.getItem(key));
       }
       return deferred.resolve();
     };
@@ -197,6 +196,9 @@ app.factory('WordsService', [
         }
         return _results;
       },
+      loadText: function(text) {
+        return processText(text);
+      },
       reset: function() {
         resetData();
         initToday();
@@ -250,6 +252,9 @@ app.factory('WordsService', [
       var chars, i, l, p, total, words, _now;
       chars = countChars(text);
       words = countWords(text);
+      if (words < 10) {
+        return;
+      }
       self.scope.lastSubmit = {
         chars: chars,
         words: words
@@ -518,7 +523,7 @@ app.controller('WordsController', [
     $scope.mode = 'loading';
     _init = service.init($scope);
     if (_init) {
-      return _init.then(function() {
+      _init.then(function() {
         $scope.data = service.data;
         return $scope.mode = 'loaded';
       }, function(error) {
@@ -526,6 +531,12 @@ app.controller('WordsController', [
         return $scope.error = error;
       });
     }
+    return $scope.$watch('text', function(text) {
+      if (text) {
+        $scope.text = '';
+        return service.loadText(text);
+      }
+    }, true);
   }
 ]);
 
