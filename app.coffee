@@ -4,6 +4,7 @@
 
 app = angular.module 'wordsApp', []
 
+# VK API
 # used as a storage for saving values
 app.factory 'VkApi', ($q, $rootScope) ->
   service =
@@ -94,12 +95,13 @@ app.factory 'LocalStorage', ['$q', 'VkApi', ($q, storage) ->
     deferred.resolve()
 
   now = ->
-    # abs seconds from 1970
+    # abs. seconds from 1970
     parseInt((new Date().getTime() - new Date(1970, 0, 5).getTime()) / 1000)
 
   service
 ]
 
+# Model, Service, Engine of the application
 app.factory 'WordsService', ['$q', 'LocalStorage', ($q, storage) ->
   self = @
 
@@ -143,10 +145,10 @@ app.factory 'WordsService', ['$q', 'LocalStorage', ($q, storage) ->
       save()
 
   periods = [
-    {n:6, d:1}
-    {n:3, d:7}
-    {n:5, d:4*7}
-    {n:12, d:4*7}
+    {n:6, d:1}      # by days: 6 periods by 1 day
+    {n:3, d:7}      # by weeks: 3 weeks by 7 days
+    {n:5, d:4*7}    # by months: 5 periods by 4 weeks
+    {n:12, d:4*7}   # by months: 12 periods by 4 weeks
   ]
 
   # implementation
@@ -221,17 +223,19 @@ app.factory 'WordsService', ['$q', 'LocalStorage', ($q, storage) ->
 
 
   shift = (_n) ->
+    # _n number of days to shift
     for i of service.data.periods
-      p = service.data.periods[i]
-      np = periods[i].n
-      d = periods[i].n
+      p = service.data.periods[i]   # period
+      np = periods[i].n             # num. of periods
+      d = periods[i].d              # days in one period
 
-      # calc real n steps for shifting
+      # calc real n periods for shifting
       n = parseInt((_n + p.x) / d)
-      if n <= 0
-        p.x += n
-        return
-      p.x += _n - (n * d)
+      if n <= 0 # no shifting
+        p.x += _n # only days counter
+        continue
+
+      p.x = _n - (n * d) # extra days after shift
 
       # shift values and put zeros
       d = np - n
@@ -243,7 +247,6 @@ app.factory 'WordsService', ['$q', 'LocalStorage', ($q, storage) ->
 
       p.words = 0
       p.words += value for value in p.data
-
 
   update = ->
     needSave = false
@@ -284,13 +287,13 @@ app.factory 'WordsService', ['$q', 'LocalStorage', ($q, storage) ->
   initData = ->
     service.data = {
       reg: today()
-      v: 1
+      v: 2
     }
     resetData()
   initTestData = ->
     service.data = {
       reg: today()
-      v: 1
+      v: 2
     }
     resetData()
     service.data.words = 2000
