@@ -148,7 +148,7 @@ app.factory('LocalStorage', [
 
 app.factory('WordsService', [
   '$q', 'LocalStorage', function($q, storage) {
-    var chars, countChars, countWords, initData, initTestData, initToday, loadPdfFile, loadTextFile, minutesNow, periods, processText, resetData, resetLevel, save, self, service, shift, spaces, stripHtml, today, update;
+    var chars, countChars, countWords, initData, initToday, loadPdfFile, loadTextFile, minutesNow, periods, processText, resetData, resetLevel, save, self, service, shift, spaces, stripHtml, today, update;
     self = this;
     service = {
       init: function(scope) {
@@ -163,7 +163,6 @@ app.factory('WordsService', [
           return storage.getValue('data').then(function(data) {
             if (data) {
               service.data = data;
-              console.log(data);
               if (update()) {
                 save().then(function() {
                   return deferred.resolve();
@@ -208,17 +207,17 @@ app.factory('WordsService', [
     };
     periods = [
       {
-        n: 6,
+        n: 7,
         d: 1
       }, {
-        n: 3,
-        d: 7
-      }, {
         n: 5,
-        d: 4 * 7
+        d: 6
+      }, {
+        n: 6,
+        d: 30
       }, {
         n: 12,
-        d: 4 * 7
+        d: 30
       }
     ];
     loadTextFile = function(file) {
@@ -292,19 +291,25 @@ app.factory('WordsService', [
       return save();
     };
     shift = function(_n) {
-      var d, i, n, np, p, value, _i, _j, _k, _ref, _ref1, _results;
+      var d, i, n, nd, np, p, value, z, _i, _j, _k, _ref, _ref1, _results;
       _results = [];
       for (i in service.data.periods) {
         p = service.data.periods[i];
         np = periods[i].n;
-        d = periods[i].d;
-        n = parseInt((_n + p.x) / d);
+        nd = periods[i].d;
+        n = parseInt((_n + p.x) / nd);
         if (n <= 0) {
           p.x += _n;
+          p.words -= _n * p.dd;
           continue;
         }
-        p.x = _n - (n * d);
+        p.x = _n - (n * nd);
         d = np - n;
+        z = 0;
+        if (d >= 0) {
+          z = p.data[d];
+        }
+        p.dd = parseInt(z / nd);
         if (d > 0) {
           for (i = _i = _ref = np - 1, _ref1 = np - d; _ref <= _ref1 ? _i <= _ref1 : _i >= _ref1; i = _ref <= _ref1 ? ++_i : --_i) {
             p.data[i] = p.data[i - n];
@@ -317,7 +322,7 @@ app.factory('WordsService', [
             p.data[i] = 0;
           }
         }
-        p.words = 0;
+        p.words = z - (p.dd * (p.x + 1));
         _results.push((function() {
           var _l, _len, _ref2, _results1;
           _ref2 = p.data;
@@ -332,9 +337,10 @@ app.factory('WordsService', [
       return _results;
     };
     update = function() {
-      var needSave, t;
+      var i, j, needSave, p, t, _i, _ref, _ref1;
       needSave = false;
       if (!service.data.v) {
+        needSave = true;
         service.data.v = 1;
         service.data.reg = today();
         service.data.level = {
@@ -342,16 +348,26 @@ app.factory('WordsService', [
           limit: service.data.words + 5000,
           words: service.data.words
         };
-        needSave = true;
       }
       if (service.data.v === 1) {
+        needSave = true;
         service.data.v = 2;
         service.data.level = {
           n: 0,
           limit: service.data.words + 5000,
           words: service.data.words
         };
+      }
+      if (service.data.v === 2) {
         needSave = true;
+        service.data.v = 3;
+        for (i in service.data.periods) {
+          p = service.data.periods[i];
+          for (j = _i = _ref = p.data.length, _ref1 = periods[i].n; _ref <= _ref1 ? _i < _ref1 : _i > _ref1; j = _ref <= _ref1 ? ++_i : --_i) {
+            p.data[j] = 0;
+          }
+          p.dd = 0;
+        }
       }
       t = today();
       if (service.data.today) {
@@ -376,22 +392,9 @@ app.factory('WordsService', [
     initData = function() {
       service.data = {
         reg: today(),
-        v: 2
+        v: 3
       };
       return resetData();
-    };
-    initTestData = function() {
-      service.data = {
-        reg: today(),
-        v: 2
-      };
-      resetData();
-      service.data.words = 2000;
-      return service.data.level = {
-        n: 7,
-        limit: 5000,
-        words: 1000
-      };
     };
     resetData = function() {
       service.data.chars = 0;
@@ -399,20 +402,24 @@ app.factory('WordsService', [
       service.data.periods = [
         {
           x: 0,
-          data: [0, 0, 0, 0, 0, 0],
-          words: 0
-        }, {
-          x: 0,
-          data: [0, 0, 0],
-          words: 0
+          data: [0, 0, 0, 0, 0, 0, 0],
+          words: 0,
+          dd: 0
         }, {
           x: 0,
           data: [0, 0, 0, 0, 0],
-          words: 0
+          words: 0,
+          dd: 0
+        }, {
+          x: 0,
+          data: [0, 0, 0, 0, 0, 0],
+          words: 0,
+          dd: 0
         }, {
           x: 0,
           data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          words: 0
+          words: 0,
+          dd: 0
         }
       ];
       return resetLevel();

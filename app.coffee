@@ -145,10 +145,11 @@ app.factory 'WordsService', ['$q', 'LocalStorage', ($q, storage) ->
       save()
 
   periods = [
-    {n:6, d:1}      # by days: 6 periods by 1 day
-    {n:3, d:7}      # by weeks: 3 weeks by 7 days
-    {n:5, d:4*7}    # by months: 5 periods by 4 weeks
-    {n:12, d:4*7}   # by months: 12 periods by 4 weeks
+    # n is num. of periods, d is a num. of days in the period
+    {n:7, d:1}      # week
+    {n:5, d:6}      # month
+    {n:6, d:30}    # half year
+    {n:12, d:30}   # year
   ]
 
   # implementation
@@ -227,44 +228,59 @@ app.factory 'WordsService', ['$q', 'LocalStorage', ($q, storage) ->
     for i of service.data.periods
       p = service.data.periods[i]   # period
       np = periods[i].n             # num. of periods
-      d = periods[i].d              # days in one period
+      nd = periods[i].d              # days in one period
 
       # calc real n periods for shifting
-      n = parseInt((_n + p.x) / d)
+      n = parseInt((_n + p.x) / nd)
       if n <= 0 # no shifting
         p.x += _n # only days counter
+        p.words -= _n * p.dd # and some values for those days of removed period
         continue
 
-      p.x = _n - (n * d) # extra days after shift
+      p.x = _n - (n * nd) # extra days after shift
 
       # shift values and put zeros
       d = np - n
+
+      z = 0
+      if d >= 0
+        z = p.data[d]
+      p.dd = parseInt(z / nd)
+
       if d > 0
         p.data[i] = p.data[i-n] for i in [(np-1)..(np-d)]
         p.data[i] = 0 for i in [0...n]
       else
         p.data[i] = 0 for i in [0...np]
 
-      p.words = 0
+      p.words = z - (p.dd * (p.x + 1)) # period that we remove except several days
       p.words += value for value in p.data
 
   update = ->
     needSave = false
     unless service.data.v
+      needSave = true
       service.data.v = 1
       service.data.reg = today()
       service.data.level =
         n: 0          # current level
         limit: service.data.words + 5000   # words limit for next level
         words: service.data.words      # words was on current level started
-      needSave = true
     if service.data.v == 1
+      needSave = true
       service.data.v = 2
       service.data.level =
         n: 0          # current level
         limit: service.data.words + 5000   # words limit for next level
         words: service.data.words      # words was on current level started
+    if service.data.v == 2
       needSave = true
+      service.data.v = 3
+      for i of service.data.periods
+        p = service.data.periods[i]
+        for j in [(p.data.length)...(periods[i].n)]
+          p.data[j] = 0
+        p.dd = 0
 
     t = today()
     if service.data.today
@@ -287,29 +303,18 @@ app.factory 'WordsService', ['$q', 'LocalStorage', ($q, storage) ->
   initData = ->
     service.data = {
       reg: today()
-      v: 2
+      v: 3
     }
     resetData()
-  initTestData = ->
-    service.data = {
-      reg: today()
-      v: 2
-    }
-    resetData()
-    service.data.words = 2000
-    service.data.level =
-      n: 7          # current level
-      limit: 5000   # words limit for next level
-      words: 1000   # words was on current level started
 
   resetData = ->
     service.data.chars = 0
     service.data.words = 0
     service.data.periods = [
-      {x:0,data:[0,0,0,0,0,0],words:0},
-      {x:0,data:[0,0,0],words:0},
-      {x:0,data:[0,0,0,0,0,],words:0},
-      {x:0,data:[0,0,0,0,0,0,0,0,0,0,0,0],words:0}
+      {x:0,data:[0,0,0,0,0,0,0],words:0,dd:0},
+      {x:0,data:[0,0,0,0,0],words:0,dd:0},
+      {x:0,data:[0,0,0,0,0,0],words:0,dd:0},
+      {x:0,data:[0,0,0,0,0,0,0,0,0,0,0,0],words:0,dd:0}
     ]
     resetLevel()
   resetLevel = ->
