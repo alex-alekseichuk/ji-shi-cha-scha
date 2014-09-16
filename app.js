@@ -163,6 +163,7 @@ app.factory('WordsService', [
           return storage.getValue('data').then(function(data) {
             if (data) {
               service.data = data;
+              console.log(data);
               if (update()) {
                 save().then(function() {
                   return deferred.resolve();
