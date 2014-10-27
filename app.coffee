@@ -67,7 +67,7 @@ app.factory 'LocalStorage', ['$q', 'VkApi', ($q, storage) ->
       if self.hasWebStorage
         localValue = JSON.parse(localStorage.getItem(key))
       storage.getValue(key).then (value) ->
-        if localValue && (value._t < localValue._t)
+        if localValue && (!value || value._t < localValue._t)
           deferred.resolve localValue
         else
           deferred.resolve value
