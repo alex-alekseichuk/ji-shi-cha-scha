@@ -103,7 +103,7 @@ app.factory('LocalStorage', [
           localValue = JSON.parse(localStorage.getItem(key));
         }
         storage.getValue(key).then(function(value) {
-          if (localValue && (value._t < localValue._t)) {
+          if (localValue && (!value || value._t < localValue._t)) {
             return deferred.resolve(localValue);
           } else {
             return deferred.resolve(value);
